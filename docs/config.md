@@ -19,6 +19,30 @@ database: /path/to/apsis.db
 ```
 
 
+### Types
+
+A program may specify a program, schedule, or action type by full Python name.  This allows
+you to use a custom program type to extend Apsis, as long as the class is importable by
+Apsis.  You may also configure shorter aliases for types:
+
+```yaml
+program_types:
+  foo_shell: foo.apsis.extension.programs.Shell
+  foo_cmd: foo.apsis.extension.programs.Command
+```
+
+Likewise for schedules and actions:
+
+```yaml
+schedule_types:
+  foo_schedule: foo.apsis.extension.schedule.MySchedule
+
+action_types:
+  foo_action: foo.apsis.extension.action.MyCustomAction
+
+```
+
+
 ### Host groups
 
 A host groups enables a job to run a program on one of a group of hosts, rather

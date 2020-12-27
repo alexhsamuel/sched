@@ -177,6 +177,8 @@ def cmd_serve(args):
         name, val = ovr.split("=", 1)
         cfg[name] = val
 
+    apsis.config.config_globals(cfg)
+
     restart = apsis.service.main.serve(
         cfg, host=args.host, port=args.port, debug=args.debug)
 
