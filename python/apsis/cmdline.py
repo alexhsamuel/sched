@@ -1,5 +1,8 @@
 import fixfmt.table
 from   ora import Time, Daytime, now, get_display_time_zone
+from   rich.style import Style
+from   rich.table import Table
+import rich.theme
 import sys
 
 import apsis.lib.itr
@@ -7,6 +10,23 @@ import apsis.lib.py
 from   apsis.lib.terminal import COLOR, WHT, RED, BLD, UND, RES
 
 #-------------------------------------------------------------------------------
+
+THEME = rich.theme.Theme({
+    "run"       : "#00af87",
+    "job"       : "#008787",
+    "param"     : "#5f5f87",
+    "arg"       : "#5f5f87",
+})
+
+STATE_STYLE = {
+    "new"       : Style(color="#00005f"),
+    "scheduled" : Style(color="#767676"),
+    "waiting"   : Style(color="#626262"),
+    "running"   : Style(color="#af8700"),
+    "success"   : Style(color="#00875f"),
+    "failure"   : Style(color="#af0000"),
+    "error"     : Style(color="#af00af"),
+}
 
 STATE_COLOR = {
     "new"       : COLOR( 17),
@@ -139,16 +159,16 @@ def format_job(job):
     yield from _fmt(None, job)
 
 
-def format_jobs(jobs):
-    table = fixfmt.table.RowTable(cfg=TABLE_CFG)
-    table.extend(
-        {
-            "job_id": job["job_id"],
-            "params": ", ".join(job["params"]),
-        }
-        for job in jobs
-    )
-    yield from table
+def format_jobs(jobs, con):
+    table = Table()
+    table.add_column("job_id", style="job")
+    table.add_column("params")
+    for job in jobs:
+        table.add_row(
+            job["job_id"],
+            ", ".join( f"[param]{p}[/]" for p in job["params"] ),
+        )
+    con.print(table)
 
 
 def _fmt(name, val, width=16, indent=-2):

@@ -4,6 +4,7 @@ import json
 import logging
 from   ora import now
 import random
+import rich.console
 import sys
 import yaml
 
@@ -48,7 +49,7 @@ parser.add_argument(
 
 #--- command: adhoc ------------------------------------------------------------
 
-def cmd_adhoc(client, args):
+def cmd_adhoc(client, args, con):
     time = parse_at_time(args.time)
     if args.shell:
         command = " ".join(args.command)
@@ -73,7 +74,7 @@ cmd.add_argument(
 
 #--- command: history ----------------------------------------------------------
 
-def cmd_history(client, args):
+def cmd_history(client, args, con):
     run_history = client.get_history(args.run_id)
     if args.format is None:
         print_lines(apsis.cmdline.format_run_history(run_history))
@@ -90,7 +91,7 @@ add_dump_format_option(cmd)
         
 #--- command: job --------------------------------------------------------------
 
-def cmd_job(client, args):
+def cmd_job(client, args, con):
     job_id = args.job  # FIXME
     job = client.get_job(job_id)
     if args.format is None:
@@ -109,11 +110,11 @@ add_dump_format_option(cmd)
 
 #--- command: jobs -------------------------------------------------------------
 
-def cmd_jobs(client, args):
+def cmd_jobs(client, args, con):
     jobs = client.get_jobs()
     if args.format is None:
-        print_lines(apsis.cmdline.format_jobs(jobs))
-        print()
+        apsis.cmdline.format_jobs(jobs, con)
+        con.print()
     else:
         dump_format(jobs, args.format)
 
@@ -125,7 +126,7 @@ add_dump_format_option(cmd)
 
 #--- command: output -----------------------------------------------------------
 
-def cmd_output(client, args):
+def cmd_output(client, args, con):
     # FIXME: For now, expose output_id=output only.
     output = client.get_output(args.run_id, "output")
     sys.stdout.buffer.write(output)
@@ -139,7 +140,7 @@ cmd.add_argument(
 
 #--- command: rerun ------------------------------------------------------------
 
-def cmd_rerun(client, arg):
+def cmd_rerun(client, arg, con):
     run = client.rerun(arg.run_id)
     if args.format is None:
         print_lines(apsis.cmdline.format_run(run))
@@ -156,7 +157,7 @@ add_dump_format_option(cmd)
 
 #--- command: run --------------------------------------------------------------
 
-def cmd_run(client, args):
+def cmd_run(client, args, con):
     for run_id in args.run_id:
         run = client.get_run(run_id)
         if args.format is None:
@@ -177,7 +178,7 @@ add_dump_format_option(cmd)
 
 #--- command: runs -------------------------------------------------------------
 
-def cmd_runs(client, arg):
+def cmd_runs(client, arg, con):
     runs = client.get_runs(
         job_id  =args.job,
         reruns  =args.reruns,
@@ -219,7 +220,7 @@ add_dump_format_option(grp)
 
 #--- command: schedule ---------------------------------------------------------
 
-def cmd_schedule(client, args):
+def cmd_schedule(client, args, con):
     run = client.schedule(args.job_id, dict(args.args), args.time)
     print_lines(apsis.cmdline.format_run(run))
 
@@ -244,7 +245,7 @@ cmd.add_argument(
 
 #--- command: signal -----------------------------------------------------------
 
-def cmd_signal(client, args):
+def cmd_signal(client, args, con):
     client.signal(args.run_id, args.signum)
 
 
@@ -259,7 +260,7 @@ cmd.add_argument(
 
 #--- test commands -------------------------------------------------------------
 
-def cmd_test0(client, args):
+def cmd_test0(client, args, con):
     time = now()
     past = args.past
     rng = args.fut - past
@@ -279,9 +280,10 @@ cmd.add_argument("past", metavar="SECS", type=float, nargs="?", default=0)
 
 args = parser.parse_args()
 client = apsis.service.client.Client((args.host, args.port))
+con = rich.console.Console(theme=apsis.cmdline.THEME)
 
 try:
-    args.cmd(client, args)
+    args.cmd(client, args, con)
 except apsis.service.client.APIError as err:
     print_lines(apsis.cmdline.format_api_error(err), file=sys.stderr)
     raise SystemExit(1)

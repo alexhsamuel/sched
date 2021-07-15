@@ -4,6 +4,7 @@ numpy
 ora ==0.4  # 0.5.0 is broken for many time zones
 pyyaml
 requests
+rich
 sanic >=21.3
 sqlalchemy
 ujson
