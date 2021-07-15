@@ -163,7 +163,7 @@ def format_jobs(jobs, con):
     table = Table()
     table.add_column("job_id", style="job")
     table.add_column("params")
-    for job in jobs:
+    for job in sorted(jobs, key=lambda j: j["job_id"]):
         table.add_row(
             job["job_id"],
             ", ".join( f"[param]{p}[/]" for p in job["params"] ),
