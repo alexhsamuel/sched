@@ -189,7 +189,7 @@ def cmd_runs(client, arg, con):
         for run in runs.values():
             print_lines(apsis.cmdline.format_run(run))
     elif args.format is None:
-        apsis.cmdline.print_runs(runs, con)
+        apsis.cmdline.print_runs(runs, con, one_job=args.job is not None)
     else:
         dump_format(runs, args.format)
 
