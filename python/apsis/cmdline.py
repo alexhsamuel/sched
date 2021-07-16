@@ -147,6 +147,10 @@ def format_schedule(schedule, indent=0):
     yield from format_jso(schedule, indent=indent)
 
 
+def format_params(params):
+    return ", ".join( f"[param]{p}[/]" for p in params )
+
+
 def format_instance(run):
     return (
         f"{JOB}{run['job_id']}{RES}("
@@ -159,15 +163,12 @@ def format_job(job):
     yield from _fmt(None, job)
 
 
-def format_jobs(jobs, con):
+def print_jobs(jobs, con):
     table = Table()
     table.add_column("job_id", style="job")
     table.add_column("params")
     for job in sorted(jobs, key=lambda j: j["job_id"]):
-        table.add_row(
-            job["job_id"],
-            ", ".join( f"[param]{p}[/]" for p in job["params"] ),
-        )
+        table.add_row(job["job_id"], format_params(job["params"]))
     con.print(table)
 
 
@@ -267,15 +268,13 @@ def format_run_history(run_history):
     return table
 
 
-def format_runs(runs, *, reruns=False):
+def print_runs(runs, con):
     # FIXME: Does this really make sense?
     def start_time(run):
         return run["times"].get("running", run["times"].get("schedule", ""))
 
     # FIXME: Support other sorts.
     runs = sorted(runs.values(), key=start_time)
-    if reruns:
-        runs = sorted(runs, key=lambda r: r["rerun"])
 
     cur = now()
     def elapsed(run):
@@ -285,48 +284,47 @@ def format_runs(runs, *, reruns=False):
             return None
         state = run["state"]
         if state == "running":
-            return cur - start
+            return format(cur - start, ".0f")
         elif state in {"success", "failure", "error"}:
             stop = Time(run["times"][state])
-            return stop - start
+            return format(stop - start, ".0f")
         else:
             return None
 
     one_job = len({ r["job_id"] for r in runs }) == 1
 
-    table = fixfmt.table.RowTable(cfg=RUNS_TABLE_CFG)
-    for pos, run in apsis.lib.itr.find_groups(runs, group=lambda r: r["rerun"]):
-        row = {
-            "run_id"    : RUN + run["run_id"] + RES,
-            "S"         : run["state"],
-            "start"     : start_time(run),
-            "elapsed"   : elapsed(run),
-            "job_id"    : JOB + run["job_id"] + RES,
-        }
-        if one_job:
-            row.update(**run["args"])
-        else:
-            row["args"] = " ".join( f"{k}={v}" for k, v in run["args"].items() )
-        table.append(**row)
-        if reruns and pos in "lo":
-            table.text("")
-
-    if table.num_rows > 0:
-        table.fmts["S"] = format_state_symbol
-        table.fmts["start"] = format_time
-        table.fmts["elapsed"] = format_elapsed
-
-        if one_job:
-            # Single job.
-            table.fmts["job_id"] = None
-
-        yield from table
-
+    table = Table()
+    table.add_column("run_id")
+    table.add_column("state")  # S
+    table.add_column("start")
+    table.add_column("elapsed")
+    table.add_column("job_id")
+    if one_job:
+        for arg in runs[0]["args"]:
+            table.add_column(arg)
     else:
-        yield f"{RED}No runs.{RES}"
+        table.add_column("args")
 
-    if not reruns:
-        yield ""
+    for run in runs:
+        row = [
+            f"[run]{run['run_id']}[/]",
+            run["state"],
+            start_time(run),
+            elapsed(run),
+            f"[job]{run['job_id']}[/]",
+        ]
+        if one_job:
+            row.extend(run["args"].values())
+        else:
+            row.append(" ".join( f"{k}={v}" for k, v in run["args"].items() ))
+        table.add_row(*row)
+
+    if len(runs) > 0:
+        con.print(table)
+    else:
+        con.print("[red]No runs.[/]")
+
+    con.print()
 
 
 def format_elapsed(secs):

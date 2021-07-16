@@ -113,7 +113,7 @@ add_dump_format_option(cmd)
 def cmd_jobs(client, args, con):
     jobs = client.get_jobs()
     if args.format is None:
-        apsis.cmdline.format_jobs(jobs, con)
+        apsis.cmdline.print_jobs(jobs, con)
         con.print()
     else:
         dump_format(jobs, args.format)
@@ -181,7 +181,6 @@ add_dump_format_option(cmd)
 def cmd_runs(client, arg, con):
     runs = client.get_runs(
         job_id  =args.job,
-        reruns  =args.reruns,
         state   =args.state,
         # FIXME: times
     )
@@ -190,7 +189,7 @@ def cmd_runs(client, arg, con):
         for run in runs.values():
             print_lines(apsis.cmdline.format_run(run))
     elif args.format is None:
-        print_lines(apsis.cmdline.format_runs(runs, reruns=args.reruns))
+        apsis.cmdline.print_runs(runs, con)
     else:
         dump_format(runs, args.format)
 
@@ -201,9 +200,6 @@ cmd = parser.add_command(
 cmd.add_argument(
     "--job", "-j", metavar="JOB-ID", default=None,
     help="show only runs of job JOB-ID")
-cmd.add_argument(
-    "--reruns", action="store_true", default=False,
-    help="show RUN-ID and its reruns")
 cmd.add_argument(
     "--state", "-s", metavar="STATE", default=None,
     choices=[ r.name for r in Run.STATE ],
