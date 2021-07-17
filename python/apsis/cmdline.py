@@ -20,6 +20,12 @@ THEME = rich.theme.Theme({
     "arg"       : "#5f5f87",
 })
 
+TABLE_KWARGS = {
+    "box"       : rich.box.SIMPLE_HEAVY,
+    "padding"   : (0, 0),
+    "show_edge" : False,
+}
+
 STATE_STYLE = {
     "new"       : Style(color="#00005f"),
     "scheduled" : Style(color="#767676"),
@@ -209,7 +215,7 @@ def format_job(job):
 
 
 def print_jobs(jobs, con):
-    table = Table()
+    table = Table(**TABLE_KWARGS)
     table.add_column("job_id", style="job")
     table.add_column("params")
     for job in sorted(jobs, key=lambda j: j["job_id"]):
@@ -319,7 +325,7 @@ def print_runs(runs, con, *, one_job=False):
     # FIXME: Support other sorts.
     runs = sorted(runs.values(), key=get_run_start)
 
-    table = Table(box=rich.box.SIMPLE_HEAVY, padding=(0, 0), show_edge=False)
+    table = Table(**TABLE_KWARGS)
     table.add_column("run_id")
     table.add_column("s")
     table.add_column("start")
