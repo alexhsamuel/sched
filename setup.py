@@ -24,11 +24,11 @@ setuptools.setup(
     ],
 
     install_requires=[
-        "fixfmt",
         "jinja2",
         "ora",
         "pyyaml",
         "requests",
+        "rich",
         "sanic",
         "sqlalchemy",
         "ujson",

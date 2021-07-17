@@ -1,4 +1,3 @@
-import fixfmt.table
 from   ora import Time, Daytime, now, get_display_time_zone
 import rich.box
 from   rich.style import Style
@@ -75,50 +74,6 @@ STATE_SYMBOL = {
 RUN = COLOR( 36)
 JOB = COLOR( 30)
 ARG = COLOR( 60)
-
-TABLE_CFG = fixfmt.table.update_cfg(
-    fixfmt.table.UNICODE_CFG,
-    {
-        "header": {
-            "separator": {
-                "between": "  ",
-            },
-        },
-        "formatters": {
-            "default": {
-                "name_width": True,
-            },
-        },
-        "row": {
-            "separator": {
-                "between": "  ",
-            },
-        },
-        "underline": {
-            "separator": {
-                "between": "  ",
-            },
-        },
-    }
-)
-
-RUNS_TABLE_CFG = fixfmt.table.update_cfg(TABLE_CFG, {
-    "header": {
-        "separator": {
-            "between": " ",
-        },
-    },
-    "underline": {
-        "separator": {
-            "between": " ",
-        },
-    },
-    "row": {
-        "separator": {
-            "between": " ",
-        },
-    },
-})
 
 #-------------------------------------------------------------------------------
 
@@ -239,7 +194,7 @@ def _fmt(name, val, width=16, indent=-2):
     else:
         if name is None:
             name = ""
-        yield prefix + fixfmt.pad(name, width - indent) + ": " + str(val)
+        yield prefix + name.ljust(width - indent) + ": " + str(val)
 
 
 def format_run(run, *, verbosity=1):
