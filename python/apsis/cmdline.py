@@ -14,10 +14,11 @@ from   apsis.lib.terminal import COLOR, WHT, RED, BLD, UND, RES
 #-------------------------------------------------------------------------------
 
 THEME = rich.theme.Theme({
-    "run"       : "#00af87",
+    "arg"       : "#5f5f87",
     "job"       : "#008787",
     "param"     : "#5f5f87",
-    "arg"       : "#5f5f87",
+    "run"       : "#00af87",
+    "time"      : "#505050",
 })
 
 TABLE_KWARGS = {
@@ -306,17 +307,16 @@ def format_run(run, *, verbosity=1):
     yield ""
 
 
-def format_run_history(run_history):
-    table = fixfmt.table.RowTable(cfg=TABLE_CFG)
-    table.extend(
-        {
-            "timestamp": Time(h["timestamp"]),
-            "message": h["message"],
-        }
-        for h in run_history
-    )
-    table.fmts["timestamp"] = format_time
-    return table
+def print_run_history(run_history, con):
+    table = Table(**TABLE_KWARGS)
+    table.add_column("time", style="time")
+    table.add_column("message")
+    for h in run_history:
+        table.add_row(
+            format_time(Time(h["timestamp"])),
+            h["message"]
+        )
+    con.print(table)
 
 
 def print_runs(runs, con, *, one_job=False):
@@ -328,7 +328,7 @@ def print_runs(runs, con, *, one_job=False):
     table = Table(**TABLE_KWARGS)
     table.add_column("run_id")
     table.add_column("s")
-    table.add_column("start")
+    table.add_column("start", style="time")
     table.add_column("elapsed", justify="right")
     table.add_column("job_id")
     if one_job:

@@ -77,7 +77,7 @@ cmd.add_argument(
 def cmd_history(client, args, con):
     run_history = client.get_history(args.run_id)
     if args.format is None:
-        print_lines(apsis.cmdline.format_run_history(run_history))
+        apsis.cmdline.print_run_history(run_history, con)
     else:
         dump_format(run_history, args.format)
 
