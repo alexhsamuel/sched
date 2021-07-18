@@ -48,7 +48,7 @@ _STATE_SYM = {
 }
 
 STATE_SYM = {
-    s: Text(c, style=STATE_STYLE[s])
+    s: Text("[") + Text(c, style=STATE_STYLE[s]) + Text("]")
     for s, c in _STATE_SYM.items()
 }
 
@@ -225,18 +225,18 @@ def print_run(run, con, *, verbosity=1):
         for cond in run["conds"]:
             print_cond(cond, con, verbosity=verbosity)
 
-    # if verbosity <= 1:
-    #     state = run["state"]
-    #     if state == "scheduled":
-    #         time = "for " + fmt_time("schedule")
-    #     elif state == "running":
-    #         time = "since " + fmt_time("running")
-    #     else:
-    #         time = "at " + fmt_time(state)
-    #     if elapsed is not None:
-    #         time += " elapsed " + elapsed
-    #     state = f"{STATE_COLOR[state]}{STATE_SYMBOL[state]} {state}{RES}"
-    #     yield f"{state} {time}"
+    if verbosity <= 1:
+        state = run["state"]
+        fmt_time = lambda n: format_time(run["times"][n])
+        if state == "scheduled":
+            time = "for " + fmt_time("schedule")
+        elif state == "running":
+            time = "since " + fmt_time("running")
+        else:
+            time = "at " + fmt_time(state)
+        if elapsed is not None:
+            time += " elapsed " + elapsed
+        con.print(STATE_SYM[state] + " " + time)
 
     # else:
     #     yield from header("History")
@@ -347,7 +347,7 @@ def print_runs(runs, con, *, one_job=False):
 
     table = Table(**TABLE_KWARGS)
     table.add_column("run_id")
-    table.add_column("s")
+    table.add_column("ste")
     table.add_column("start", style="time")
     table.add_column("elapsed", justify="right")
     table.add_column("job_id")
