@@ -15,6 +15,7 @@ from   apsis.lib.terminal import COLOR, WHT, RED, BLD, UND, RES
 THEME = rich.theme.Theme({
     "arg"       : "#5f5f87",
     "job"       : "#008787",
+    "key"       : "color(244)",
     "param"     : "#5f5f87",
     "run"       : "#00af87",
     "time"      : "#505050",
@@ -131,24 +132,25 @@ def format_jso(jso, indent=0):
     ind = " " * indent
     wid = 12 - indent
     keys = ( k for k in jso if k not in {"str"} )
-    for key in apsis.lib.py.to_front(keys, ("type", )):
-        yield f"{ind}{COLOR(244)}{key:{wid}s}:{RES} {jso[key]}"
+    keys = apsis.lib.py.to_front(keys, ("type", ))
+    return "\n".join( f"{ind}[key]{k:{wid}s}:[/] {jso[k]}" for k in keys )
 
 
-def format_cond(cond, *, verbosity=1):
+def print_cond(cond, con, *, verbosity=1):
     if verbosity <= 1:
         pass
     else:
-        yield "- " + cond["str"]
+        con.print(f"- {cond['str']}")
         if 2 <= verbosity:
-            yield from format_jso(cond, indent=2)
+            con.print(format_jso(cond, indent=2))
 
 
 def format_program(program, *, verbosity=1, indent=0):
-    if verbosity <= 1:
-        yield f"{program['type']}: {BLD}{program['str']}{RES}"
-    else:
-        yield from format_jso(program, indent=indent)
+    return (
+        f"{program['type']}: [bold]{program['str']}[/]"
+        if verbosity <= 1
+        else format_jso(program, indent=indent)
+    )
 
 
 def format_schedule(schedule, indent=0):
@@ -204,15 +206,56 @@ def print_run(run, con, *, verbosity=1):
     # Run ID.
     run_id = run["run_id"]
     job = format_instance(run)
-    con.print(f"[b]run [run]{run_id}[/] {job}")
+    con.print(f"[bold]run [run]{run_id}[/] {job}")
 
     def header(title):
         if verbosity >= 2:
             con.print()
             con.print(f"[u]{title}[/]")
 
-    # Current state and relevant time.
-    elapsed = 0
+    elapsed = get_run_elapsed(now(), run)
+    elapsed = "" if elapsed is None else format_duration(elapsed)
+
+    header("Program")
+    con.print(format_program(run["program"], verbosity=verbosity))
+
+    # Format conds.
+    if len(run["conds"]) > 0:
+        header("Conditions")
+        for cond in run["conds"]:
+            print_cond(cond, con, verbosity=verbosity)
+
+    # if verbosity <= 1:
+    #     state = run["state"]
+    #     if state == "scheduled":
+    #         time = "for " + fmt_time("schedule")
+    #     elif state == "running":
+    #         time = "since " + fmt_time("running")
+    #     else:
+    #         time = "at " + fmt_time(state)
+    #     if elapsed is not None:
+    #         time += " elapsed " + elapsed
+    #     state = f"{STATE_COLOR[state]}{STATE_SYMBOL[state]} {state}{RES}"
+    #     yield f"{state} {time}"
+
+    # else:
+    #     yield from header("History")
+    #     for d, t in sorted(run["times"].items(), key=lambda i: i[1]):
+    #         e = (
+    #             f" elapsed {elapsed}" if d in ("failure", "success")
+    #             else ""
+    #         )
+    #         if d == "schedule":
+    #             d = "scheduled for"
+    #         else:
+    #             d = f"{STATE_COLOR[d]}{d:9s}{RES} at "
+    #         yield f"{d} {format_time(t)}{e}"
+
+    # # Message, if any.
+    # if run["message"] is not None:
+    #     yield f"➔ {WHT}{run['message']}{RES}"
+    
+    # yield ""
 
 
 def format_run(run, *, verbosity=1):
@@ -293,10 +336,14 @@ def print_run_history(run_history, con):
 
 
 def print_runs(runs, con, *, one_job=False):
-    cur = now()
+    if len(runs) == 0:
+        con.print("[red]No runs.[/]")
+        return
 
     # FIXME: Support other sorts.
     runs = sorted(runs.values(), key=get_run_start)
+
+    cur = now()
 
     table = Table(**TABLE_KWARGS)
     table.add_column("run_id")
@@ -325,11 +372,7 @@ def print_runs(runs, con, *, one_job=False):
             row.append(" ".join( f"{k}={v}" for k, v in run["args"].items() ))
         table.add_row(*row)
 
-    if len(runs) > 0:
-        con.print(table)
-    else:
-        con.print("[red]No runs.[/]")
-
+    con.print(table)
     con.print()
 
 
