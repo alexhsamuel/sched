@@ -113,17 +113,18 @@ def get_run_start(run):
 
 def get_run_elapsed(cur, run):
     try:
+        return run["elapsed"]
+    except KeyError:
+        pass
+
+    try:
         start = Time(run["times"]["running"])
     except KeyError:
-        return None
-    state = run["state"]
-    if state == "running":
-        return cur - start
-    elif state in {"success", "failure", "error"}:
-        stop = Time(run["times"][state])
-        return stop - start
+        pass
     else:
-        return None
+        return cur - start
+
+    return None
 
 
 def format_jso(jso, indent=0):
@@ -160,8 +161,8 @@ def format_params(params):
 
 def format_instance(run):
     return (
-        f"{JOB}{run['job_id']}{RES}("
-        + ", ".join( f"{k}={ARG}{v}{RES}" for k, v in run["args"].items() )
+          f"[job]{run['run_id']}[/]("
+        + ", ".join( f"{k}=[arg]{v}[/]" for k, v in run["args"].items() )
         + ")"
     )
 
@@ -195,6 +196,23 @@ def _fmt(name, val, width=16, indent=-2):
         if name is None:
             name = ""
         yield prefix + name.ljust(width - indent) + ": " + str(val)
+
+
+def print_run(run, con, *, verbosity=1):
+    BULLET = "✦"
+
+    # Run ID.
+    run_id = run["run_id"]
+    job = format_instance(run)
+    con.print(f"[b]run [run]{run_id}[/] {job}")
+
+    def header(title):
+        if verbosity >= 2:
+            con.print()
+            con.print(f"[u]{title}[/]")
+
+    # Current state and relevant time.
+    elapsed = 0
 
 
 def format_run(run, *, verbosity=1):
