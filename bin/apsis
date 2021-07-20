@@ -280,7 +280,7 @@ con = rich.console.Console(theme=apsis.cmdline.THEME)
 try:
     args.cmd(client, args, con)
 except apsis.service.client.APIError as err:
-    print_lines(apsis.cmdline.format_api_error(err), file=sys.stderr)
+    apsis.cmdline.print_api_error(err, con)
     raise SystemExit(1)
 except (KeyboardInterrupt, BrokenPipeError):
     pass

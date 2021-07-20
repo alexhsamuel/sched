@@ -8,7 +8,7 @@ import sys
 
 import apsis.lib.itr
 import apsis.lib.py
-from   apsis.lib.terminal import COLOR, WHT, RED, BLD, UND, RES
+from   apsis.lib.terminal import COLOR, RED, BLD, RES
 
 #-------------------------------------------------------------------------------
 
@@ -52,29 +52,7 @@ STATE_SYM = {
     for s, c in _STATE_SYM.items()
 }
 
-STATE_COLOR = {
-    "new"       : COLOR( 17),
-    "scheduled" : COLOR(243),
-    "waiting"   : COLOR(241),
-    "running"   : COLOR(136),
-    "success"   : COLOR( 29),
-    "failure"   : COLOR(124),
-    "error"     : COLOR(127),
-}
-
-STATE_SYMBOL = {
-    "new"       : ".",
-    "scheduled" : "O",
-    "waiting"   : "|",
-    "running"   : ">",
-    "success"   : "+",
-    "failure"   : "X",
-    "error"     : "!",
-}
-
-RUN = COLOR( 36)
 JOB = COLOR( 30)
-ARG = COLOR( 60)
 
 #-------------------------------------------------------------------------------
 
@@ -309,12 +287,8 @@ def print_runs(runs, con, *, one_job=False):
     con.print()
 
 
-def format_api_error(err):
-    yield (
-        RED + BLD + "Error: " + RES + BLD
-        + str(err) + RES
-        + f" [API status: {err.status}]"
-    )
+def print_api_error(err, con):
+    con.print(f"[bold][red]Error:[/] {err}[/] [API status: {err.status}]")
 
     try:
         job_errors = err.jso["job_errors"]
@@ -322,8 +296,8 @@ def format_api_error(err):
         pass
     else:
         for job_id, msg in job_errors:
-            yield "- " + JOB + job_id + RES
-            yield indent(msg, 2)
+            con.print(f"- [job]{job_id}[/]")
+            con.print(indent(msg, 2))
 
 
 #-------------------------------------------------------------------------------
