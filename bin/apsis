@@ -56,7 +56,7 @@ def cmd_adhoc(client, args, con):
         run = client.schedule_shell_program(time, command)
     else:
         run = client.schedule_program(time, args.command)
-    print_lines(apsis.cmdline.format_run(run))
+    apsis.cmdline.print_run(run, con)
 
 
 cmd = parser.add_command(
@@ -143,7 +143,7 @@ cmd.add_argument(
 def cmd_rerun(client, arg, con):
     run = client.rerun(arg.run_id)
     if args.format is None:
-        apsis.cmdline.format_run(run, con)
+        apsis.cmdline.print_run(run, con)
     else:
         dump_format(run, args.format)
 
@@ -186,7 +186,7 @@ def cmd_runs(client, arg, con):
 
     if args.summary:
         for run in runs.values():
-            print_lines(apsis.cmdline.format_run(run))
+            apsis.cmdline.print_run(run, con)
     elif args.format is None:
         apsis.cmdline.print_runs(runs, con, one_job=args.job is not None)
     else:
@@ -217,7 +217,7 @@ add_dump_format_option(grp)
 
 def cmd_schedule(client, args, con):
     run = client.schedule(args.job_id, dict(args.args), args.time)
-    print_lines(apsis.cmdline.format_run(run))
+    apsis.cmdline.print_run(run, con)
 
 
 def parse_arg(arg):
