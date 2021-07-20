@@ -136,19 +136,17 @@ def format_jso(jso, indent=0):
     return "\n".join( f"{ind}[key]{k:{wid}s}:[/] {jso[k]}" for k in keys )
 
 
-def print_cond(cond, con, *, verbosity=1):
-    if verbosity <= 1:
-        pass
-    else:
+def print_cond(cond, con, *, verbosity=0):
+    if verbosity < 1:
         con.print(f"- {cond['str']}")
-        if 2 <= verbosity:
-            con.print(format_jso(cond, indent=2))
+    else:
+        con.print(format_jso(cond, indent=2))
 
 
-def format_program(program, *, verbosity=1, indent=0):
+def format_program(program, *, verbosity=0, indent=0):
     return (
         f"{program['type']}: [bold]{program['str']}[/]"
-        if verbosity <= 1
+        if verbosity < 1
         else format_jso(program, indent=indent)
     )
 
@@ -163,7 +161,7 @@ def format_params(params):
 
 def format_instance(run):
     return (
-          f"[job]{run['run_id']}[/]("
+          f"[job]{run['job_id']}[/]("
         + ", ".join( f"{k}=[arg]{v}[/]" for k, v in run["args"].items() )
         + ")"
     )
@@ -200,7 +198,7 @@ def _fmt(name, val, width=16, indent=-2):
         yield prefix + name.ljust(width - indent) + ": " + str(val)
 
 
-def print_run(run, con, *, verbosity=1):
+def print_run(run, con, *, verbosity=0):
     BULLET = "✦"
 
     # Run ID.
@@ -209,7 +207,7 @@ def print_run(run, con, *, verbosity=1):
     con.print(f"[bold]run [run]{run_id}[/] {job}")
 
     def header(title):
-        if verbosity >= 2:
+        if verbosity >= 1:
             con.print()
             con.print(f"[u]{title}[/]")
 
@@ -225,7 +223,7 @@ def print_run(run, con, *, verbosity=1):
         for cond in run["conds"]:
             print_cond(cond, con, verbosity=verbosity)
 
-    if verbosity <= 1:
+    if verbosity < 1:
         state = run["state"]
         fmt_time = lambda n: format_time(run["times"][n])
         if state == "scheduled":
@@ -238,24 +236,24 @@ def print_run(run, con, *, verbosity=1):
             time += " elapsed " + elapsed
         con.print(STATE_SYM[state] + " " + time)
 
-    # else:
-    #     yield from header("History")
-    #     for d, t in sorted(run["times"].items(), key=lambda i: i[1]):
-    #         e = (
-    #             f" elapsed {elapsed}" if d in ("failure", "success")
-    #             else ""
-    #         )
-    #         if d == "schedule":
-    #             d = "scheduled for"
-    #         else:
-    #             d = f"{STATE_COLOR[d]}{d:9s}{RES} at "
-    #         yield f"{d} {format_time(t)}{e}"
+    else:
+        header("History")
+        for d, t in sorted(run["times"].items(), key=lambda i: i[1]):
+            e = (
+                f" elapsed {elapsed}" if d in ("failure", "success")
+                else ""
+            )
+            if d == "schedule":
+                d = "scheduled for"
+            else:
+                d = Text(d, style=STATE_STYLE[d]) + " at "
+            con.print(f"{d} {format_time(t)}{e}")
 
-    # # Message, if any.
-    # if run["message"] is not None:
-    #     yield f"➔ {WHT}{run['message']}{RES}"
+    # Message, if any.
+    if run["message"] is not None:
+        con.print(f"➔ [white]{run['message']}[/]")
     
-    # yield ""
+    con.print()
 
 
 def format_run(run, *, verbosity=1):
